@@ -63,14 +63,18 @@ const run = async () => {
       };
 
       const result = await userCollection.updateOne(filter, updateDoc, options);
-      const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN, {
-        expiresIn: "1d",
-      });
+      const token = jwt.sign(
+        { email: email },
+        process.env.ACCESS_TOKEN_SECRET,
+        {
+          expiresIn: "1d",
+        }
+      );
       res.send({ result, token });
     });
 
     // to get all the user
-    app.get("/users", verifyJwt, async (req, res) => {
+    app.get("/users", verifyJWT, async (req, res) => {
       const query = {};
       const cursor = userCollection.find(query);
       const users = await cursor.toArray();
