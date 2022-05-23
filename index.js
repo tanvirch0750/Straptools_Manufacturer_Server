@@ -46,6 +46,7 @@ const run = async () => {
     console.log("strap server is running");
     const productsCollection = client.db("straptools").collection("products");
     const userCollection = client.db("straptools").collection("users");
+    const orderCollection = client.db("straptools").collection("orders");
 
     app.get("/", async (req, res) => {
       res.send("server is running");
@@ -99,11 +100,26 @@ const run = async () => {
       const product = await productsCollection.findOne(query);
       res.send(product);
     });
+
+    // orders
+    // post order
+    app.post("/order", verifyJWT, async (req, res) => {
+      const order = req.body;
+      const query = {
+        id: order.id,
+      };
+      const exists = await orderCollection.findOne(query);
+      if (exists) {
+        return res.send({ success: false, order: exists });
+      }
+      const result = await orderCollection.insertOne(order);
+      return res.send({ success: true, result });
+    });
   } finally {
   }
 };
 run().catch(console.dir);
 
 app.listen(port, () => {
-  console.log("Listening to car repair port", port);
+  console.log("Listening to straptools port", port);
 });
