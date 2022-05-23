@@ -46,6 +46,19 @@ const run = async () => {
     const userCollection = client.db("straptools").collection("users");
     const orderCollection = client.db("straptools").collection("orders");
 
+    // verify admin middleware
+    const verifyAdmin = async (req, res, next) => {
+      const requester = req.decoded.email;
+      const requesterAccount = await userCollection.findOne({
+        email: requester,
+      });
+      if (requesterAccount.role === "admin") {
+        next();
+      } else {
+        res.status(403).send({ message: "forbidden" });
+      }
+    };
+
     app.get("/", async (req, res) => {
       res.send("server is running");
     });
@@ -80,6 +93,25 @@ const run = async () => {
       const cursor = userCollection.find(query);
       const users = await cursor.toArray();
       res.send(users);
+    });
+
+    // make admin route
+    app.put("/users/admin/:email", verifyJWT, verifyAdmin, async (req, res) => {
+      const email = req.params.email;
+      const filter = { email };
+      const updateDoc = {
+        $set: { role: "admin" },
+      };
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    // check user is admin or not return- true or false
+    app.get("/admin/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const user = await userCollection.findOne({ email: email });
+      const isAdmin = user.role === "admin";
+      res.send({ admin: isAdmin });
     });
 
     // Products
