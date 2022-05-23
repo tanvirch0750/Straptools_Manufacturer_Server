@@ -3,6 +3,7 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion } = require("mongodb");
+const ObjectId = require("mongodb").ObjectId;
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -10,6 +11,7 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// verify jwt function
 const verifyJWT = (req, res, next) => {
   const authHeader = req.headers.authorization;
   console.log(authHeader);
@@ -79,6 +81,23 @@ const run = async () => {
       const cursor = userCollection.find(query);
       const users = await cursor.toArray();
       res.send(users);
+    });
+
+    // Products
+    // to get all the products
+    app.get("/products", async (req, res) => {
+      const query = {};
+      const cursor = productsCollection.find(query);
+      const products = await cursor.toArray();
+      res.send(products);
+    });
+
+    // get single product from db
+    app.get("/products/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const product = await productsCollection.findOne(query);
+      res.send(product);
     });
   } finally {
   }
