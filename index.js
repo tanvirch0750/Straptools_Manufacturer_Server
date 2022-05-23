@@ -26,7 +26,6 @@ const verifyJWT = (req, res, next) => {
     if (err) {
       return res.status(403).send({ message: "forbidden access" });
     } else {
-      console.log("decoded", decoded);
       req.decoded = decoded;
       next();
     }
@@ -105,15 +104,23 @@ const run = async () => {
     // post order
     app.post("/order", verifyJWT, async (req, res) => {
       const order = req.body;
-      const query = {
-        id: order.id,
-      };
-      const exists = await orderCollection.findOne(query);
-      if (exists) {
-        return res.send({ success: false, order: exists });
-      }
       const result = await orderCollection.insertOne(order);
       return res.send({ success: true, result });
+    });
+
+    //get - to get all the orders by user
+    app.get("/order", verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      const decodedEmail = req.decoded.email;
+
+      if (email === decodedEmail) {
+        const query = { email: email };
+        const cursor = orderCollection.find(query);
+        const orders = await cursor.toArray();
+        return res.send(orders);
+      } else {
+        return res.status(403).send({ message: "forbidden access" });
+      }
     });
   } finally {
   }
