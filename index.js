@@ -4,6 +4,8 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const ObjectId = require("mongodb").ObjectId;
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -46,6 +48,7 @@ const run = async () => {
     const userCollection = client.db("straptools").collection("users");
     const orderCollection = client.db("straptools").collection("orders");
     const reviewCollection = client.db("straptools").collection("reviews");
+    const paymentCollection = client.db("straptools").collection("payments");
 
     // verify admin middleware
     const verifyAdmin = async (req, res, next) => {
@@ -203,6 +206,50 @@ const run = async () => {
       const cursor = orderCollection.find(query);
       const orders = await cursor.toArray();
       res.send(orders);
+    });
+
+    // get- single order product for payment
+    app.get("/orders/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const order = await orderCollection.findOne(query);
+      res.send(order);
+    });
+
+    // stripe payment route
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+      // const { price } = req.body;
+      const order = req.body;
+      const price = order.totalPrice;
+      const amount = price * 100;
+
+      // Create a PaymentIntent with the order amount and currency
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+    // patch- update order for payment
+    app.patch("/order/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const payment = req.body;
+      const filter = { _id: ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId,
+        },
+      };
+
+      const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
+      const orderResult = await paymentCollection.insertOne(payment);
+      res.send(updatedDoc);
     });
 
     // post review
