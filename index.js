@@ -252,6 +252,14 @@ const run = async () => {
       res.send(updatedDoc);
     });
 
+    // delete order
+    app.delete("/order/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await orderCollection.deleteOne(query);
+      res.send(result);
+    });
+
     // post review
     app.post("/review", verifyJWT, async (req, res) => {
       const review = req.body;
