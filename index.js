@@ -151,6 +151,13 @@ const run = async () => {
     });
 
     // Products
+    // post product
+    app.post("/products", verifyJWT, verifyAdmin, async (req, res) => {
+      const product = req.body;
+      const result = await productsCollection.insertOne(product);
+      return res.send({ success: true, result });
+    });
+
     // to get all the products
     app.get("/products", async (req, res) => {
       const query = {};
