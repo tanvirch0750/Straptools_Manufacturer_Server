@@ -89,7 +89,7 @@ const run = async () => {
     });
 
     // to get all the user
-    app.get("/users", verifyJWT, async (req, res) => {
+    app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
       const query = {};
       const cursor = userCollection.find(query);
       const users = await cursor.toArray();
@@ -195,6 +195,14 @@ const run = async () => {
       } else {
         return res.status(403).send({ message: "forbidden access" });
       }
+    });
+
+    // get all order
+    app.get("/orders", verifyJWT, verifyAdmin, async (req, res) => {
+      const query = {};
+      const cursor = orderCollection.find(query);
+      const orders = await cursor.toArray();
+      res.send(orders);
     });
 
     // post review
