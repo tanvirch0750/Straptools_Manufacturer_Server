@@ -45,6 +45,7 @@ const run = async () => {
     const productsCollection = client.db("straptools").collection("products");
     const userCollection = client.db("straptools").collection("users");
     const orderCollection = client.db("straptools").collection("orders");
+    const reviewCollection = client.db("straptools").collection("reviews");
 
     // verify admin middleware
     const verifyAdmin = async (req, res, next) => {
@@ -152,6 +153,13 @@ const run = async () => {
       } else {
         return res.status(403).send({ message: "forbidden access" });
       }
+    });
+
+    // post review
+    app.post("/review", verifyJWT, async (req, res) => {
+      const review = req.body;
+      const result = await reviewCollection.insertOne(review);
+      return res.send({ success: true, result });
     });
   } finally {
   }
