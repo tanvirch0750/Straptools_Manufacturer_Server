@@ -96,6 +96,41 @@ const run = async () => {
       res.send(users);
     });
 
+    // get single user
+    app.get("/users/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const user = await userCollection.findOne(query);
+      res.send(user);
+    });
+
+    // update user
+
+    app.put("/user/profile/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+
+      const filter = { email };
+      const options = { upsert: true };
+
+      const updatedDoc = {
+        $set: {
+          name: user.name,
+          image: user.image,
+          location: user.location,
+          education: user.education,
+          linkedin: user.linkedin,
+          phone: user.phone,
+        },
+      };
+      const result = await userCollection.updateOne(
+        filter,
+        updatedDoc,
+        options
+      );
+      res.send(result);
+    });
+
     // make admin route
     app.put("/users/admin/:email", verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
