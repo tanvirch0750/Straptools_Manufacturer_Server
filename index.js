@@ -260,6 +260,22 @@ const run = async () => {
       res.send(updatedDoc);
     });
 
+    // patch- approved order
+    app.patch("/order/approved/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const payment = req.body;
+      const filter = { _id: ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          approved: true,
+          transactionId: payment.transactionId,
+        },
+      };
+
+      const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
+      res.send(updatedDoc);
+    });
+
     // delete order
     app.delete("/order/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
