@@ -177,6 +177,14 @@ const run = async () => {
       res.send(product);
     });
 
+    // delete product
+    app.delete("/products/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await productsCollection.deleteOne(query);
+      res.send(result);
+    });
+
     // orders
     // post order
     app.post("/order", verifyJWT, async (req, res) => {
