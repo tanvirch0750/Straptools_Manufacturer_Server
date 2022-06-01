@@ -107,8 +107,15 @@ const run = async () => {
       res.send(user);
     });
 
-    // update user
+    // delete user
+    app.delete("/users/:email", verifyJWT, verifyAdmin, async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await userCollection.deleteOne(query);
+      res.send(result);
+    });
 
+    // update user
     app.put("/user/profile/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       const user = req.body;
