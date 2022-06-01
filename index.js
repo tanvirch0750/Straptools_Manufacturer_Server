@@ -302,6 +302,14 @@ const run = async () => {
       const reviews = await cursor.toArray();
       res.send(reviews);
     });
+
+    // delete review
+    app.delete("/review/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await reviewCollection.deleteOne(query);
+      res.send(result);
+    });
   } finally {
   }
 };
