@@ -1,10 +1,10 @@
-const express = require("express");
-const cors = require("cors");
-const jwt = require("jsonwebtoken");
-require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
-const ObjectId = require("mongodb").ObjectId;
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const express = require('express');
+const cors = require('cors');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
+const { MongoClient, ServerApiVersion } = require('mongodb');
+const ObjectId = require('mongodb').ObjectId;
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -19,13 +19,13 @@ const verifyJWT = (req, res, next) => {
 
   if (!authHeader) {
     return res.status(401).send({
-      message: "unauthorized access",
+      message: 'unauthorized access',
     });
   }
-  const token = authHeader.split(" ")[1];
+  const token = authHeader.split(' ')[1];
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if (err) {
-      return res.status(403).send({ message: "forbidden access" });
+      return res.status(403).send({ message: 'forbidden access' });
     } else {
       req.decoded = decoded;
       next();
@@ -43,12 +43,12 @@ const client = new MongoClient(uri, {
 const run = async () => {
   try {
     await client.connect();
-    console.log("strap server is running");
-    const productsCollection = client.db("straptools").collection("products");
-    const userCollection = client.db("straptools").collection("users");
-    const orderCollection = client.db("straptools").collection("orders");
-    const reviewCollection = client.db("straptools").collection("reviews");
-    const paymentCollection = client.db("straptools").collection("payments");
+    console.log('strap server is running');
+    const productsCollection = client.db('straptools').collection('products');
+    const userCollection = client.db('straptools').collection('users');
+    const orderCollection = client.db('straptools').collection('orders');
+    const reviewCollection = client.db('straptools').collection('reviews');
+    const paymentCollection = client.db('straptools').collection('payments');
 
     // verify admin middleware
     const verifyAdmin = async (req, res, next) => {
@@ -56,20 +56,20 @@ const run = async () => {
       const requesterAccount = await userCollection.findOne({
         email: requester,
       });
-      if (requesterAccount.role === "admin") {
+      if (requesterAccount.role === 'admin') {
         next();
       } else {
-        res.status(403).send({ message: "forbidden" });
+        res.status(403).send({ message: 'forbidden' });
       }
     };
 
-    app.get("/", async (req, res) => {
-      res.send("server is running");
+    app.get('/', async (req, res) => {
+      res.send('server is running');
     });
 
     // Users
     //post - will use when login and signup
-    app.put("/user/:email", async (req, res) => {
+    app.put('/user/:email', async (req, res) => {
       const email = req.params.email;
       const user = req.body;
 
@@ -85,14 +85,14 @@ const run = async () => {
         { email: email },
         process.env.ACCESS_TOKEN_SECRET,
         {
-          expiresIn: "1d",
+          expiresIn: '1d',
         }
       );
       res.send({ result, token });
     });
 
     // to get all the user
-    app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
+    app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
       const query = {};
       const cursor = userCollection.find(query);
       const users = await cursor.toArray();
@@ -100,7 +100,7 @@ const run = async () => {
     });
 
     // get single user
-    app.get("/users/:email", verifyJWT, async (req, res) => {
+    app.get('/users/:email', verifyJWT, async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const user = await userCollection.findOne(query);
@@ -108,7 +108,7 @@ const run = async () => {
     });
 
     // delete user
-    app.delete("/users/:email", verifyJWT, verifyAdmin, async (req, res) => {
+    app.delete('/users/:email', verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const result = await userCollection.deleteOne(query);
@@ -116,7 +116,7 @@ const run = async () => {
     });
 
     // update user
-    app.put("/user/profile/:email", verifyJWT, async (req, res) => {
+    app.put('/user/profile/:email', verifyJWT, async (req, res) => {
       const email = req.params.email;
       const user = req.body;
 
@@ -142,34 +142,34 @@ const run = async () => {
     });
 
     // make admin route
-    app.put("/users/admin/:email", verifyJWT, verifyAdmin, async (req, res) => {
+    app.put('/users/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
       const filter = { email };
       const updateDoc = {
-        $set: { role: "admin" },
+        $set: { role: 'admin' },
       };
       const result = await userCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
 
     // check user is admin or not return- true or false
-    app.get("/admin/:email", verifyJWT, async (req, res) => {
+    app.get('/admin/:email', verifyJWT, async (req, res) => {
       const email = req.params.email;
       const user = await userCollection.findOne({ email: email });
-      const isAdmin = user.role === "admin";
+      const isAdmin = user.role === 'admin';
       res.send({ admin: isAdmin });
     });
 
     // Products
     // post product
-    app.post("/products", verifyJWT, verifyAdmin, async (req, res) => {
+    app.post('/products', verifyJWT, verifyAdmin, async (req, res) => {
       const product = req.body;
       const result = await productsCollection.insertOne(product);
       return res.send({ success: true, result });
     });
 
     // to get all the products
-    app.get("/products", async (req, res) => {
+    app.get('/products', async (req, res) => {
       const query = {};
       const cursor = productsCollection.find(query);
       const products = await cursor.toArray();
@@ -177,15 +177,52 @@ const run = async () => {
     });
 
     // get single product from db
-    app.get("/products/:id", verifyJWT, async (req, res) => {
+    app.get('/products/:id', verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const product = await productsCollection.findOne(query);
       res.send(product);
     });
 
+    // update product
+    app.put('/products/:id', verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const {
+        name,
+        availableQuantity,
+        category,
+        description,
+        fullDescription,
+        minimumOrder,
+        image,
+        quantity,
+        pricePerUnit,
+      } = req.body;
+      const query = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          name,
+          availableQuantity,
+          category,
+          description,
+          fullDescription,
+          minimumOrder,
+          image,
+          quantity,
+          pricePerUnit,
+        },
+      };
+      const result = await productsCollection.updateOne(
+        query,
+        updatedDoc,
+        options
+      );
+      res.send(result);
+    });
+
     // delete product
-    app.delete("/products/:id", verifyJWT, verifyAdmin, async (req, res) => {
+    app.delete('/products/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await productsCollection.deleteOne(query);
@@ -194,14 +231,14 @@ const run = async () => {
 
     // orders
     // post order
-    app.post("/order", verifyJWT, async (req, res) => {
+    app.post('/order', verifyJWT, async (req, res) => {
       const order = req.body;
       const result = await orderCollection.insertOne(order);
       return res.send({ success: true, result });
     });
 
     //get - to get all the orders by user
-    app.get("/order", verifyJWT, async (req, res) => {
+    app.get('/order', verifyJWT, async (req, res) => {
       const email = req.query.email;
       const decodedEmail = req.decoded.email;
 
@@ -211,12 +248,12 @@ const run = async () => {
         const orders = await cursor.toArray();
         return res.send(orders);
       } else {
-        return res.status(403).send({ message: "forbidden access" });
+        return res.status(403).send({ message: 'forbidden access' });
       }
     });
 
     // get all order
-    app.get("/orders", verifyJWT, verifyAdmin, async (req, res) => {
+    app.get('/orders', verifyJWT, verifyAdmin, async (req, res) => {
       const query = {};
       const cursor = orderCollection.find(query);
       const orders = await cursor.toArray();
@@ -224,7 +261,7 @@ const run = async () => {
     });
 
     // get- single order product for payment
-    app.get("/orders/:id", verifyJWT, async (req, res) => {
+    app.get('/orders/:id', verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const order = await orderCollection.findOne(query);
@@ -232,7 +269,7 @@ const run = async () => {
     });
 
     // stripe payment route
-    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+    app.post('/create-payment-intent', verifyJWT, async (req, res) => {
       // const { price } = req.body;
       const order = req.body;
       const price = order.totalPrice;
@@ -241,8 +278,8 @@ const run = async () => {
       // Create a PaymentIntent with the order amount and currency
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
-        currency: "usd",
-        payment_method_types: ["card"],
+        currency: 'usd',
+        payment_method_types: ['card'],
       });
 
       res.send({
@@ -251,7 +288,7 @@ const run = async () => {
     });
 
     // patch- update order for payment
-    app.patch("/order/:id", verifyJWT, async (req, res) => {
+    app.patch('/order/:id', verifyJWT, async (req, res) => {
       const id = req.params.id;
       const payment = req.body;
       const filter = { _id: ObjectId(id) };
@@ -268,7 +305,7 @@ const run = async () => {
     });
 
     // patch- approved order
-    app.patch("/order/approved/:id", verifyJWT, async (req, res) => {
+    app.patch('/order/approved/:id', verifyJWT, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const updatedDoc = {
@@ -281,7 +318,7 @@ const run = async () => {
     });
 
     // delete order
-    app.delete("/order/:id", verifyJWT, async (req, res) => {
+    app.delete('/order/:id', verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await orderCollection.deleteOne(query);
@@ -289,14 +326,14 @@ const run = async () => {
     });
 
     // post review
-    app.post("/review", verifyJWT, async (req, res) => {
+    app.post('/review', verifyJWT, async (req, res) => {
       const review = req.body;
       const result = await reviewCollection.insertOne(review);
       return res.send({ success: true, result });
     });
 
     // to get all the reviews
-    app.get("/review", async (req, res) => {
+    app.get('/review', async (req, res) => {
       const query = {};
       const cursor = reviewCollection.find(query);
       const reviews = await cursor.toArray();
@@ -304,7 +341,7 @@ const run = async () => {
     });
 
     // delete review
-    app.delete("/review/:id", verifyJWT, verifyAdmin, async (req, res) => {
+    app.delete('/review/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await reviewCollection.deleteOne(query);
@@ -316,5 +353,5 @@ const run = async () => {
 run().catch(console.dir);
 
 app.listen(port, () => {
-  console.log("Listening to straptools port", port);
+  console.log('Listening to straptools port', port);
 });
